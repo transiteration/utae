@@ -87,7 +87,7 @@ def iterate(model,
         acc_meter.add(acc.item())
         if (i + 1) % config.display_step == 0:
             print(
-                "Step [{}/{}], Loss: {:.4f}, mIoU : {:.2f}, Acc {:.2f}".format(
+                "Step [{}/{}], Loss: {:.4f}, IoU : {:.2f}, Acc {:.2f}".format(
                     i + 1, len(data_loader), 
                     loss_meter.value()[0], 
                     iou_meter.value()[0], 
@@ -150,11 +150,7 @@ def train_loop(config):
         # model = nn.DataParallel(model, device_ids=[0, 1])  # Specify GPUs if needed
         model = model.to(device)
         model.apply(weight_init)
-        # model = torch.compile(model)
         optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr, weight_decay=1e-4)
-        # weights = torch.ones(config.num_classes, device=device).float()
-        # weights[config.ignore_index] = 0
-        # criterion = nn.CrossEntropyLoss(weight=weights)
         criterion = nn.BCEWithLogitsLoss()
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
                                                                T_max=3 * config.epochs // 4,
@@ -213,7 +209,7 @@ def train_loop(config):
                 }
 
             if val_iou > best_mIoU:
-                print(f"{fold_string} Validation mIoU Score Improved ({best_mIoU:0.4f} ---> {val_iou:0.4f})")
+                print(f"{fold_string} Validation IoU Score Improved ({best_mIoU:0.4f} ---> {val_iou:0.4f})")
                 best_mIoU = val_iou
                 torch.save(
                     {
@@ -245,15 +241,15 @@ if __name__ == "__main__":
         padding_mode="reflect"
         ignore_index=None   
         epochs=100
-        batch_size=8
+        batch_size=16
         num_workers=20
-        display_step=860
+        display_step=699
         lr=0.001
         fold=None
         dataset_folder="./JAXA"
         ref_date="2020-01-01"
         res_dir="./artifacts"
-        exp_name="binary_JAXA"
+        exp_name="binary_JAXA_2"
         device="cuda"
     
     train_loop(config=config)

@@ -120,10 +120,10 @@ class UtaeDataset(Dataset):
             )
         )
         target = torch.from_numpy(target.astype(int))
-        target = torch.where((target == 4) | (target == 5) | (target == 6) | (target == 7) | (target == 8) | (target == 9) | (target == 10) | (target == 11) | (target == 12),  0, target)
+        # target = torch.where((target == 4) | (target == 5) | (target == 6) | (target == 7) | (target == 8) | (target == 9) | (target == 10) | (target == 11) | (target == 12),  0, target)
         # target = torch.where((target == 5) | (target == 8) | (target == 9) | (target == 10) | (target == 11),  5, target)
         # target = torch.where(target == 12, 8, target)
-        # target = torch.where(target == 3, 1, 0)
+        target = torch.where(target == 3, 1, 0)
         target = F.interpolate(
             target.unsqueeze(0).unsqueeze(0).float(), size=(128, 128), mode='nearest'
         ).squeeze(0).squeeze(0).long()
