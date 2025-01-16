@@ -119,7 +119,7 @@ def download_sat_images(bbox, mask_name, patch_dir):
     collection = (
         ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
         .filterBounds(bbox_coords)
-        .filterDate("2023-01-01", "2024-12-30")
+        .filterDate("2020-01-01", "2020-12-30")
         .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 10))
         .map(maskS2clouds_scl)
     )
