@@ -10,10 +10,10 @@ import torch
 import torch.nn as nn
 import torchnet as tnt
 
+from src.learning.miou import IoU
 from src import utils, model_utils 
 from src.dataset import UtaeDataset
 from torch.utils.data import DataLoader
-import segmentation_models_pytorch as smp
 from src.learning.weight_init import weight_init
 
 warnings.filterwarnings("ignore")
@@ -54,15 +54,18 @@ def checkpoint(log, fold_dir, epoch=None, best=False, test=None):
             json.dump(log, outfile, indent=4)
 
 def iterate(model,
-            data_loader,
-            criterion,
-            config,
-            optimizer=None,
-            mode="train",
-            device=None):
+             data_loader,
+             criterion,
+             config,
+             optimizer=None,
+             mode="train",
+             device=None):
     loss_meter = tnt.meter.AverageValueMeter()
-    iou_meter = tnt.meter.AverageValueMeter()
-    acc_meter = tnt.meter.AverageValueMeter()
+    iou_meter = IoU(
+        num_classes=config.num_classes,
+        ignore_index=config.ignore_index,
+        cm_device=config.device
+    )
     for i, batch in enumerate(data_loader):
         if device is not None:
             batch = recursive_todevice(batch, device)
@@ -73,28 +76,25 @@ def iterate(model,
         else:
             optimizer.zero_grad()
             out = model(x, batch_positions=dates)
-        pred = out.squeeze(dim=1)
-        loss = criterion(pred, y.float())
+        
+        loss = criterion(out, y)
         if mode == "train":
             loss.backward()
             optimizer.step()
-
-        tp, fp, fn, tn = smp.metrics.get_stats(pred, y, mode='binary', threshold=0.5)
-        iou = smp.metrics.iou_score(tp, fp, fn, tn, reduction="micro")
-        acc = smp.metrics.accuracy(tp, fp, fn, tn, reduction="micro")
+        with torch.inference_mode():
+            pred = out.argmax(dim=1)
+        iou_meter.add(pred, y)
         loss_meter.add(loss.item())
-        iou_meter.add(iou.item())
-        acc_meter.add(acc.item())
+
         if (i + 1) % config.display_step == 0:
+            miou, acc = iou_meter.get_miou_acc()
             print(
-                "Step [{}/{}], Loss: {:.4f}, mIoU : {:.2f}, Acc {:.2f}".format(
-                    i + 1, len(data_loader), 
-                    loss_meter.value()[0], 
-                    iou_meter.value()[0], 
-                    acc_meter.value()[0]
+                "Step [{}/{}], Loss: {:.4f}, Acc : {:.2f}, mIoU {:.2f}".format(
+                    i + 1, len(data_loader), loss_meter.value()[0], acc, miou
                 )
             )
-    return loss_meter.value()[0], iou_meter.value()[0], acc_meter.value()[0]
+    miou, acc = iou_meter.get_miou_acc()
+    return loss_meter.value()[0], miou, acc
 
 def train_loop(config):
     set_seed()
@@ -109,10 +109,10 @@ def train_loop(config):
         fold_sequence if config.fold is None else [fold_sequence[config.fold - 1]]
     )
     for fold, (train_folds, val_fold) in enumerate(fold_sequence):
-        fold_string = f"[FOLD {train_folds[0]}]"
+        fold_string = f"[FOLD {fold+1}]"
         print(f"{fold_string} Training folds {train_folds}, Validation set {val_fold}")
         device = torch.device(config.device)
-        fold_dir = os.path.join(config.res_dir, config.exp_name, f"fold_{train_folds[0]}")
+        fold_dir = os.path.join(config.res_dir, config.exp_name, f"fold_{fold+1}")
         os.makedirs(fold_dir, exist_ok=True)
 
         dt_train = UtaeDataset(folder=config.dataset_folder,
@@ -150,12 +150,10 @@ def train_loop(config):
         # model = nn.DataParallel(model, device_ids=[0, 1])  # Specify GPUs if needed
         model = model.to(device)
         model.apply(weight_init)
-        # model = torch.compile(model)
-        optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr, weight_decay=1e-4)
-        # weights = torch.ones(config.num_classes, device=device).float()
-        # weights[config.ignore_index] = 0
-        # criterion = nn.CrossEntropyLoss(weight=weights)
-        criterion = nn.BCEWithLogitsLoss()
+        optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr)
+        weights = torch.ones(config.num_classes, device=device).float()
+        weights[config.ignore_index] = -1
+        criterion = nn.CrossEntropyLoss(weight=weights)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
                                                                T_max=3 * config.epochs // 4,
                                                                eta_min=1e-4)
@@ -180,7 +178,7 @@ def train_loop(config):
                 data_loader=val_loader,
                 criterion=criterion,
                 config=config,
-                optimizer=None,
+                optimizer=optimizer,
                 mode="val",
                 device=device,
             )
@@ -232,7 +230,7 @@ if __name__ == "__main__":
         model="utae"
         encoder_widths=[64, 64, 64, 128]
         decoder_widths=[32, 32, 64, 128]
-        out_conv=[32, 1]
+        out_conv=[32, 4]
         str_conv_k=4
         str_conv_s=2
         str_conv_p=1
@@ -243,7 +241,8 @@ if __name__ == "__main__":
         d_k=4
         pad_value=0
         padding_mode="reflect"
-        ignore_index=None   
+        num_classes=4
+        ignore_index=0   
         epochs=100
         batch_size=8
         num_workers=20
@@ -251,9 +250,9 @@ if __name__ == "__main__":
         lr=0.001
         fold=None
         dataset_folder="./JAXA"
-        ref_date="2020-01-01"
+        ref_date="2018-01-01"
         res_dir="./artifacts"
-        exp_name="binary_JAXA"
+        exp_name="4_cl_2"
         device="cuda"
     
     train_loop(config=config)
