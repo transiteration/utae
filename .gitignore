@@ -3,4 +3,4 @@ old/
 artifacts/
 .DS_Store
 __pycache__
-.ipynb
+*.ipynb
