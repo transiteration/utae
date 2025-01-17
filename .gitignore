@@ -4,3 +4,4 @@ artifacts/
 .DS_Store
 __pycache__
 *.ipynb
+model_deployment/
