@@ -10,9 +10,10 @@ import torch
 import torch.nn as nn
 import torchnet as tnt
 
-from src import utils, model_utils 
+from src.utils import pad_collate
 from src.dataset import UtaeDataset
 from torch.utils.data import DataLoader
+from src.backbones.utae import get_model
 import segmentation_models_pytorch as smp
 from src.learning.weight_init import weight_init
 
@@ -99,7 +100,7 @@ def iterate(model,
 def train_loop(config):
     set_seed()
     fold_sequence = [
-        [[1, 2, 3, 4], [5]],
+        # [[1, 2, 3, 4], [5]],
         [[2, 3, 4, 5], [1]],
         [[3, 4, 5, 1], [2]],
         [[4, 5, 1, 2], [3]],
@@ -125,7 +126,7 @@ def train_loop(config):
                              reference_date=config.ref_date,
                              folds=val_fold)
 
-        collate_fn = lambda x: utils.pad_collate(x, config.pad_value)
+        collate_fn = lambda x: pad_collate(x, config.pad_value)
         train_loader = DataLoader(
             dt_train,
             batch_size=config.batch_size,
@@ -146,7 +147,7 @@ def train_loop(config):
         )
         print(f"{fold_string} Dataset sizes: Train {len(dt_train)}, Validation {len(dt_val)}")
 
-        model = model_utils.get_model(config)
+        model = get_model(config)
         # model = nn.DataParallel(model, device_ids=[0, 1])  # Specify GPUs if needed
         model = model.to(device)
         model.apply(weight_init)
