@@ -100,7 +100,7 @@ def iterate(model,
 def train_loop(config):
     set_seed()
     fold_sequence = [
-        # [[1, 2, 3, 4], [5]],
+        [[1, 2, 3, 4], [5]],
         [[2, 3, 4, 5], [1]],
         [[3, 4, 5, 1], [2]],
         [[4, 5, 1, 2], [3]],
@@ -117,12 +117,10 @@ def train_loop(config):
         os.makedirs(fold_dir, exist_ok=True)
 
         dt_train = UtaeDataset(folder=config.dataset_folder,
-                               norm=True,
                                reference_date=config.ref_date,
                                folds=train_folds)
 
         dt_val = UtaeDataset(folder=config.dataset_folder,
-                             norm=True,
                              reference_date=config.ref_date,
                              folds=val_fold)
 
@@ -250,7 +248,7 @@ if __name__ == "__main__":
         dataset_folder="./JAXA"
         ref_date="2020-01-01"
         res_dir="./artifacts"
-        exp_name="binary_JAXA_2"
+        exp_name="binary_JAXA_1"
         device="cuda"
     
     train_loop(config=config)
