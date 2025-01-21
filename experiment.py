@@ -11,9 +11,10 @@ import torch.nn as nn
 import torchnet as tnt
 
 from src.learning.miou import IoU
-from src import utils, model_utils 
+from src.utils import pad_collate
 from src.dataset import UtaeDataset
 from torch.utils.data import DataLoader
+from src.backbones.utae import get_model
 from src.learning.weight_init import weight_init
 
 warnings.filterwarnings("ignore")
@@ -116,16 +117,14 @@ def train_loop(config):
         os.makedirs(fold_dir, exist_ok=True)
 
         dt_train = UtaeDataset(folder=config.dataset_folder,
-                               norm=True,
                                reference_date=config.ref_date,
                                folds=train_folds)
 
         dt_val = UtaeDataset(folder=config.dataset_folder,
-                             norm=True,
                              reference_date=config.ref_date,
                              folds=val_fold)
 
-        collate_fn = lambda x: utils.pad_collate(x, config.pad_value)
+        collate_fn = lambda x: pad_collate(x, config.pad_value)
         train_loader = DataLoader(
             dt_train,
             batch_size=config.batch_size,
@@ -146,13 +145,13 @@ def train_loop(config):
         )
         print(f"{fold_string} Dataset sizes: Train {len(dt_train)}, Validation {len(dt_val)}")
 
-        model = model_utils.get_model(config)
+        model = get_model(config)
         # model = nn.DataParallel(model, device_ids=[0, 1])  # Specify GPUs if needed
         model = model.to(device)
         model.apply(weight_init)
         optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr)
         weights = torch.ones(config.num_classes, device=device).float()
-        weights[config.ignore_index] = -1
+        weights[config.ignore_index] = 0
         criterion = nn.CrossEntropyLoss(weight=weights)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
                                                                T_max=3 * config.epochs // 4,
@@ -230,7 +229,7 @@ if __name__ == "__main__":
         model="utae"
         encoder_widths=[64, 64, 64, 128]
         decoder_widths=[32, 32, 64, 128]
-        out_conv=[32, 4]
+        out_conv=[32, 13]
         str_conv_k=4
         str_conv_s=2
         str_conv_p=1
@@ -241,18 +240,18 @@ if __name__ == "__main__":
         d_k=4
         pad_value=0
         padding_mode="reflect"
-        num_classes=4
+        num_classes=13
         ignore_index=0   
         epochs=100
-        batch_size=8
+        batch_size=16
         num_workers=20
-        display_step=860
+        display_step=699
         lr=0.001
         fold=None
         dataset_folder="./JAXA"
-        ref_date="2018-01-01"
+        ref_date="2020-01-01"
         res_dir="./artifacts"
-        exp_name="4_cl_2"
+        exp_name="13_cl_1"
         device="cuda"
     
     train_loop(config=config)
