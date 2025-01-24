@@ -152,7 +152,7 @@ def train_loop(config):
         optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr)
         weights = torch.ones(config.num_classes, device=device).float()
         weights[config.ignore_index] = 0
-        criterion = nn.CrossEntropyLoss(weight=weights)
+        criterion = nn.CrossEntropyLoss(weight=weights, ignore_index=config.ignore_index)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
                                                                T_max=3 * config.epochs // 4,
                                                                eta_min=1e-4)
@@ -229,7 +229,7 @@ if __name__ == "__main__":
         model="utae"
         encoder_widths=[64, 64, 64, 128]
         decoder_widths=[32, 32, 64, 128]
-        out_conv=[32, 13]
+        out_conv=[32, 4] # Update number of output classes
         str_conv_k=4
         str_conv_s=2
         str_conv_p=1
@@ -240,7 +240,7 @@ if __name__ == "__main__":
         d_k=4
         pad_value=0
         padding_mode="reflect"
-        num_classes=13
+        num_classes=4  # Update number of output classes
         ignore_index=0   
         epochs=100
         batch_size=16
@@ -251,7 +251,7 @@ if __name__ == "__main__":
         dataset_folder="./JAXA"
         ref_date="2020-01-01"
         res_dir="./artifacts"
-        exp_name="13_cl_1"
+        exp_name="4_cl_2" # Update experiment name
         device="cuda"
     
     train_loop(config=config)

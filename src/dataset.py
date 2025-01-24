@@ -89,7 +89,8 @@ class UtaeDataset(Dataset):
             )
         )
         target = torch.from_numpy(target.astype(int))
-        # target = torch.where(target == 3, 1, 0)
+        target = torch.where(target == 3, 1, 0)
+        # target = torch.where(target > 3, torch.tensor(0), target)
         target = F.interpolate(
             target.unsqueeze(0).unsqueeze(0).float(), size=(128, 128), mode='bilinear'
         ).squeeze(0).squeeze(0).long()
