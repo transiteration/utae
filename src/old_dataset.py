@@ -8,14 +8,10 @@ from datetime import datetime
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 
+
 class UtaeDataset(Dataset):
     def __init__(
-        self,
-        folder,
-        norm=True,
-        folds=None,
-        reference_date="2020-01-01",
-        sats=["S2"]
+        self, folder, norm=True, folds=None, reference_date="2020-01-01", sats=["S2"]
     ):
         super(UtaeDataset, self).__init__()
         self.folder = folder
@@ -23,7 +19,7 @@ class UtaeDataset(Dataset):
         self.folds = folds
         self.reference_date = datetime(*map(int, reference_date.split("-")))
         self.sats = sats
-                
+
         self.meta_patch = gpd.read_file(os.path.join(folder, "metadata.json"))
         self.meta_patch.index = self.meta_patch["ID_PATCH"].astype(int)
         self.meta_patch.sort_index(inplace=True)
@@ -110,32 +106,36 @@ class UtaeDataset(Dataset):
             d = data[s]  # d shape: (T, C, H, W)
             T, C, H, W = d.shape
             d = d.view(T * C, 1, H, W)
-            d = F.interpolate(d, size=(128, 128), mode='bilinear', align_corners=False)
+            d = F.interpolate(d, size=(128, 128), mode="bilinear", align_corners=False)
             d = d.view(T, C, 128, 128)
             data[s] = d
 
         target = np.load(
-            os.path.join(
-                self.folder, "ANNOTATIONS", "TARGET_{}.npy".format(id_patch)
-            )
+            os.path.join(self.folder, "ANNOTATIONS", "TARGET_{}.npy".format(id_patch))
         )
         target = torch.from_numpy(target.astype(int))
         # target = torch.where((target == 4) | (target == 5) | (target == 6) | (target == 7) | (target == 8) | (target == 9) | (target == 10) | (target == 11) | (target == 12),  0, target)
         # target = torch.where((target == 5) | (target == 8) | (target == 9) | (target == 10) | (target == 11),  5, target)
         # target = torch.where(target == 12, 8, target)
         target = torch.where(target == 3, 1, 0)
-        target = F.interpolate(
-            target.unsqueeze(0).unsqueeze(0).float(), size=(128, 128), mode='nearest'
-        ).squeeze(0).squeeze(0).long()
+        target = (
+            F.interpolate(
+                target.unsqueeze(0).unsqueeze(0).float(),
+                size=(128, 128),
+                mode="nearest",
+            )
+            .squeeze(0)
+            .squeeze(0)
+            .long()
+        )
 
-        dates = {
-                s: torch.from_numpy(self.get_dates(id_patch, s)) for s in self.sats
-        }
+        dates = {s: torch.from_numpy(self.get_dates(id_patch, s)) for s in self.sats}
         if len(self.sats) == 1:
             data = data[self.sats[0]]
             dates = dates[self.sats[0]]
         return (data, dates), target
-    
+
+
 def compute_norm_vals(folder, sat):
     norm_vals = {}
     for fold in range(1, 6):

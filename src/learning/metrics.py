@@ -31,7 +31,6 @@ def mIou(y_true, y_pred, n_classes):
     return iou / n_observed
 
 
-
 def confusion_matrix_analysis(mat):
     """
     This method computes all the performance metrics from the confusion matrix. In addition to overall accuracy, the
@@ -57,10 +56,10 @@ def confusion_matrix_analysis(mat):
         fp = np.sum(mat[:, j]) - tp
         fn = np.sum(mat[j, :]) - tp
 
-        d['IoU'] = tp / (tp + fp + fn)
-        d['Precision'] = tp / (tp + fp)
-        d['Recall'] = tp / (tp + fn)
-        d['F1-score'] = 2 * tp / (2 * tp + fp + fn)
+        d["IoU"] = tp / (tp + fp + fn)
+        d["Precision"] = tp / (tp + fp)
+        d["Recall"] = tp / (tp + fn)
+        d["F1-score"] = 2 * tp / (2 * tp + fp + fn)
 
         per_class[str(j)] = d
 
@@ -69,17 +68,17 @@ def confusion_matrix_analysis(mat):
         FN += fn
 
     overall = {}
-    overall['micro_IoU'] = TP / (TP + FP + FN)
-    overall['micro_Precision'] = TP / (TP + FP)
-    overall['micro_Recall'] = TP / (TP + FN)
-    overall['micro_F1-score'] = 2 * TP / (2 * TP + FP + FN)
+    overall["micro_IoU"] = TP / (TP + FP + FN)
+    overall["micro_Precision"] = TP / (TP + FP)
+    overall["micro_Recall"] = TP / (TP + FN)
+    overall["micro_F1-score"] = 2 * TP / (2 * TP + FP + FN)
 
     macro = pd.DataFrame(per_class).transpose().mean()
-    overall['MACRO_IoU'] = macro.loc['IoU']
-    overall['MACRO_Precision'] = macro.loc['Precision']
-    overall['MACRO_Recall'] = macro.loc['Recall']
-    overall['MACRO_F1-score'] = macro.loc['F1-score']
+    overall["MACRO_IoU"] = macro.loc["IoU"]
+    overall["MACRO_Precision"] = macro.loc["Precision"]
+    overall["MACRO_Recall"] = macro.loc["Recall"]
+    overall["MACRO_F1-score"] = macro.loc["F1-score"]
 
-    overall['Accuracy'] = np.sum(np.diag(mat)) / np.sum(mat)
+    overall["Accuracy"] = np.sum(np.diag(mat)) / np.sum(mat)
 
     return per_class, overall

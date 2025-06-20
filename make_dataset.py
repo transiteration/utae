@@ -10,6 +10,7 @@ import numpy as np
 import requests
 import rasterio
 
+
 # -----------------------
 # 1. Cloud Mask with SCL
 # -----------------------
@@ -34,16 +35,14 @@ def maskS2clouds_scl(image):
     # Keep only pixels NOT in these classes:
     #   3 (cloud shadow), 7 (unclassified), 8 (cloud medium prob)
     #   9 (cloud high prob), 10 (thin cirrus), 11 (snow/ice)
-    mask = scl.neq(3)\
-              .And(scl.neq(9))\
-              .And(scl.neq(10))\
-
+    mask = scl.neq(3).And(scl.neq(9)).And(scl.neq(10))
     # Apply the mask
     masked = image.updateMask(mask)
 
     # Finally, select only the spectral bands of interest
     # (You can keep SCL if you want, but here we drop it)
     return masked.select(["B2", "B3", "B4", "B8", "B11", "B12"])
+
 
 # -----------------------
 # 2. Read and Download
@@ -56,6 +55,7 @@ def read_band(band_path):
         meta = src.meta.copy()
     return data, bbox, meta
 
+
 def download_file(url, dest_folder):
     """Downloads the Sentinel-2 zip file from a getDownloadURL()."""
     response = requests.get(url, stream=True)
@@ -66,6 +66,7 @@ def download_file(url, dest_folder):
         return zip_path
     else:
         raise Exception("Failed to download file.")
+
 
 def process_image(url, index, patch_path):
     """
@@ -95,7 +96,9 @@ def process_image(url, index, patch_path):
                 band_path = os.path.join(bands_tmp_dir, band_paths[band])
                 band_data, _, _ = read_band(band_path)
                 # Resize to 128 x 128 (optional; for demonstration)
-                band_data = cv2.resize(band_data, (128, 128), interpolation=cv2.INTER_LINEAR)
+                band_data = cv2.resize(
+                    band_data, (128, 128), interpolation=cv2.INTER_LINEAR
+                )
                 bands_data.append(band_data)
             else:
                 print(f"Warning: {band} not found in the downloaded files.")
@@ -103,6 +106,7 @@ def process_image(url, index, patch_path):
 
         stacked_bands = np.stack(bands_data, axis=0)  # shape: [6, 128, 128]
         np.save(f"{patch_path}_{index}.npy", stacked_bands)
+
 
 # -----------------------
 # 3. Download & Stack
@@ -135,11 +139,9 @@ def download_sat_images(bbox, mask_name, patch_dir):
         dates[str(i)] = int(date_str)
 
         # Download at 10 m scale in EPSG:4326
-        url = image.getDownloadURL({
-            "scale": 10,
-            "crs": "EPSG:4326",
-            "region": bbox_coords
-        })
+        url = image.getDownloadURL(
+            {"scale": 10, "crs": "EPSG:4326", "region": bbox_coords}
+        )
 
         try:
             process_image(url=url, index=i, patch_path=patch_path)
@@ -149,6 +151,7 @@ def download_sat_images(bbox, mask_name, patch_dir):
             continue
 
     return dates
+
 
 def stack_sat_images(patch_dir):
     """
@@ -167,6 +170,7 @@ def stack_sat_images(patch_dir):
     stacked_array = np.stack(array_list, axis=0)
     return stacked_array  # shape: [T, 6, 128, 128] in this example
 
+
 # -----------------------
 # 4. Main Pipeline
 # -----------------------
@@ -175,12 +179,9 @@ def get_patch_id(metadata_path):
     Retrieves the last processed patch_id from a metadata JSON,
     or initializes it if none exists.
     """
-    metadata = {
-        "type": "FeatureCollection",
-        "features": []
-    }
+    metadata = {"type": "FeatureCollection", "features": []}
     if os.path.exists(metadata_path):
-        with open(metadata_path, 'r') as json_file:
+        with open(metadata_path, "r") as json_file:
             metadata = json.load(json_file)
         if metadata["features"]:
             last_feature = metadata["features"][-1]
@@ -194,6 +195,7 @@ def get_patch_id(metadata_path):
         _id = 0
     return metadata, patch_id, _id
 
+
 def dataset_processing():
     """
     Main function that:
@@ -205,7 +207,7 @@ def dataset_processing():
     masks_dir = "./JAXA/split_1"
     ann_dir = "./JAXA/ANNOTATIONS"
     sat_dir = "./JAXA/DATA_S2"
-    metadata_path = './JAXA/metadata.json'
+    metadata_path = "./JAXA/metadata.json"
     processed_files_path = "./JAXA/processed.txt"
 
     os.makedirs(ann_dir, exist_ok=True)
@@ -238,9 +240,7 @@ def dataset_processing():
 
             # Download & process S2 with SCL-based cloud masking
             dates_dict = download_sat_images(
-                bbox=bbox,
-                mask_name=mask_name,
-                patch_dir=tmp_dir
+                bbox=bbox, mask_name=mask_name, patch_dir=tmp_dir
             )
 
             # Stack all .npy files into [T, C, H, W]
@@ -259,10 +259,10 @@ def dataset_processing():
                 "properties": {
                     "ID_PATCH": patch_id,
                     "dates-S2": dates,
-                }
+                },
             }
             metadata["features"].append(feature)
-            with open(metadata_path, 'w') as json_file:
+            with open(metadata_path, "w") as json_file:
                 json.dump(metadata, json_file, indent=4)
 
             # Mark this mask as processed
@@ -274,7 +274,10 @@ def dataset_processing():
             _id += 1
 
             elapsed = time.time() - start_time
-            print(f"{mask_name} | {elapsed:.2f} sec | {len(dates)} images in time-series.")
+            print(
+                f"{mask_name} | {elapsed:.2f} sec | {len(dates)} images in time-series."
+            )
+
 
 if __name__ == "__main__":
     ee.Initialize()  # Make sure you're authenticated with earthengine

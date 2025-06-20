@@ -3,11 +3,13 @@ U-TAE Implementation
 Author: Vivien Sainte Fare Garnot (github/VSainteuf)
 License: MIT
 """
+
 import torch
 import torch.nn as nn
 
 from src.backbones.convlstm import ConvLSTM, BConvLSTM
 from src.backbones.ltae import LTAE2d
+
 
 def get_model(config):
     if config.model == "utae":
@@ -30,6 +32,7 @@ def get_model(config):
             padding_mode=config.padding_mode,
         )
     return model
+
 
 class UTAE(nn.Module):
     def __init__(
@@ -148,7 +151,9 @@ class UTAE(nn.Module):
             d_k=d_k,
         )
         self.temporal_aggregator = Temporal_Aggregator(mode=agg_mode)
-        self.out_conv = ConvBlock(nkernels=[decoder_widths[0]] + out_conv, padding_mode=padding_mode)
+        self.out_conv = ConvBlock(
+            nkernels=[decoder_widths[0]] + out_conv, padding_mode=padding_mode
+        )
 
     def forward(self, input, batch_positions=None, return_att=False):
         pad_mask = (
@@ -551,7 +556,9 @@ class RecUNet(nn.Module):
             )
         elif temporal == "mono":
             self.temporal_encoder = None
-        self.out_conv = ConvBlock(nkernels=[decoder_widths[0]] + out_conv, padding_mode=padding_mode)
+        self.out_conv = ConvBlock(
+            nkernels=[decoder_widths[0]] + out_conv, padding_mode=padding_mode
+        )
 
     def forward(self, input, batch_positions=None):
         pad_mask = (
@@ -600,4 +607,3 @@ class RecUNet(nn.Module):
                 return out, maps
             else:
                 return out
-

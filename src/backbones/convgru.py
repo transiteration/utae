@@ -2,6 +2,7 @@
 Modified from https://github.com/TUM-LMF/MTLCC-pytorch/blob/master/src/models/convlstm/convlstm.py
 authors: TUM-LMF
 """
+
 import torch.nn as nn
 from torch.autograd import Variable
 import torch
@@ -147,7 +148,6 @@ class ConvGRU(nn.Module):
         cur_layer_input = input_tensor
 
         for layer_idx in range(self.num_layers):
-
             h = hidden_state[layer_idx]
             output_inner = []
             for t in range(seq_len):

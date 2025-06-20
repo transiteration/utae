@@ -64,60 +64,64 @@ def pad_collate(batch, pad_value=0):
 
 def get_ntrainparams(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
- 
 
-cmap = np.array([
-[0, 0, 0],            # Class 0 - No data (Black)
-[0, 0, 255],          # Class 1 - Water (Blue)
-[192, 192, 192],      # Class 2 - Urban/Built-up (Gray)
-[255, 255, 0],        # Class 3 - Rice (Yellow)
-[220, 20, 60],        # Class 4 - Other Crops (Crimson)
-[59, 237, 85],        # Class 5 - Grass/Shrub (Light Green)
-[139, 69, 19],        # Class 6 - Woody Crops/Orchards (Brown)
-[210, 180, 140],      # Class 7 - Barren (Light Brown)
-[0, 128, 0],          # Class 8 - Evergreen Forest (Dark Green)
-[154, 205, 50],       # Class 9 - Deciduous Forest (Warm Green)
-[255, 105, 180],      # Class 10 - Plantation Forest (Pink)
-[102, 205, 170],      # Class 11 - Mangrove Forest (Aquamarine)
-[166, 113, 227]       # Class 12 - Aquaculture (Lavander)
-]) 
 
-cmap_2 = np.array([
-[0, 0, 0],            # Class 0 - No data (Black)
-[0, 0, 255],          # Class 1 - Water (Blue)
-[192, 192, 192],      # Class 2 - Urban/Built-up (Gray)
-[255, 255, 0],        # Class 3 - Rice (Yellow)
-[220, 20, 60],        # Class 4 - Other Crops (Crimson)
-[0, 128, 0],          # Class 5 - Evergreen Forest (Dark Green)
-[139, 69, 19],        # Class 6 - Woody Crops/Orchards (Brown)
-[210, 180, 140],      # Class 7 - Barren (Light Brown)
-[166, 113, 227]       # Class 8 - Aquaculture (Lavander)
-]) 
+cmap = np.array(
+    [
+        [0, 0, 0],  # Class 0 - No data (Black)
+        [0, 0, 255],  # Class 1 - Water (Blue)
+        [192, 192, 192],  # Class 2 - Urban/Built-up (Gray)
+        [255, 255, 0],  # Class 3 - Rice (Yellow)
+        [220, 20, 60],  # Class 4 - Other Crops (Crimson)
+        [59, 237, 85],  # Class 5 - Grass/Shrub (Light Green)
+        [139, 69, 19],  # Class 6 - Woody Crops/Orchards (Brown)
+        [210, 180, 140],  # Class 7 - Barren (Light Brown)
+        [0, 128, 0],  # Class 8 - Evergreen Forest (Dark Green)
+        [154, 205, 50],  # Class 9 - Deciduous Forest (Warm Green)
+        [255, 105, 180],  # Class 10 - Plantation Forest (Pink)
+        [102, 205, 170],  # Class 11 - Mangrove Forest (Aquamarine)
+        [166, 113, 227],  # Class 12 - Aquaculture (Lavander)
+    ]
+)
+
+cmap_2 = np.array(
+    [
+        [0, 0, 0],  # Class 0 - No data (Black)
+        [0, 0, 255],  # Class 1 - Water (Blue)
+        [192, 192, 192],  # Class 2 - Urban/Built-up (Gray)
+        [255, 255, 0],  # Class 3 - Rice (Yellow)
+        [220, 20, 60],  # Class 4 - Other Crops (Crimson)
+        [0, 128, 0],  # Class 5 - Evergreen Forest (Dark Green)
+        [139, 69, 19],  # Class 6 - Woody Crops/Orchards (Brown)
+        [210, 180, 140],  # Class 7 - Barren (Light Brown)
+        [166, 113, 227],  # Class 8 - Aquaculture (Lavander)
+    ]
+)
 
 class_names = [
-'No data',
-'Water',
-'Urban/Built-up',
-'Rice',
-'Other Crops',
-'Grass/Shrub',
-'Woody Crops/Orchards',
-'Barren',
-'Evergreen Forest',
-'Deciduous Forest',
-'Plantation Forest ',
-'Mangrove Forest',
-'Aquaculture'
+    "No data",
+    "Water",
+    "Urban/Built-up",
+    "Rice",
+    "Other Crops",
+    "Grass/Shrub",
+    "Woody Crops/Orchards",
+    "Barren",
+    "Evergreen Forest",
+    "Deciduous Forest",
+    "Plantation Forest ",
+    "Mangrove Forest",
+    "Aquaculture",
 ]
 
 class_names_2 = [
-'No data',
-'Water',
-'Urban/Built-up',
-'Rice',
-'Other Crops',
-'Forest',
-'Woody Crops/Orchards',
-'Barren',
-'Aquaculture'
+    "No data",
+    "Water",
+    "Urban/Built-up",
+    "Rice",
+    "Other Crops",
+    "Forest",
+    "Woody Crops/Orchards",
+    "Barren",
+    "Aquaculture",
 ]
